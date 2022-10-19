@@ -2,15 +2,20 @@
 using System.Data.Common;
 using System.Diagnostics.SymbolStore;
 using System.IO;
+using System.Runtime.Serialization;
 
 namespace Directory_Backup
 {
     class Program
     {
-        static string versionNum = "1.0", loadDir = "none", saveDir = "none", appDir;
-        static string[,] paths;
-        static int numPathsSaved;
+        static string versionNum = "2.0", loadDir = "none", saveDir = "none", appDir;
+        static string[,] paths, presets;
+        static int numPathsSaved, numPresetsSaved;
         static bool debug = false, duping = false; //set debug to true for more information whenever something is attempted
+
+
+        static bool displayMovedFiles = true; //set to false to hide file transfer confirmations
+
 
         static void Main(string[] args)
         {
@@ -25,39 +30,63 @@ namespace Directory_Backup
                 switch (runMethod)
                 {
                     default:
-                    case 0:
+                    case 0: //error in menu
                         Console.WriteLine("\tError in menu function...\n\tProcess canceled. Press ENTER to continue...");
                         Console.ReadLine();
                         return;
-                    case 1:
+                    case 1: //load path to load from
                         loadDir = LoadPath("load from");
                         break;
-                    case 2:
+                    case 2: //create path to load from
                         loadDir = CreatePath("load from");
                         break;
-                    case 3:
+                    case 3: //load path to save to
                         saveDir = LoadPath("save to");
                         break;
-                    case 4:
+                    case 4: //create path to save to
                         saveDir = CreatePath("save to");
                         break;
-                    case 5:
+                    case 5: //actively duplicating
                         AttemptDupe();
                         break;
-                    case 6:
+                    case 6: //reset the active directories (loadDir & saveDir)
                         ResetDirs();
                         break;
-                    case 7:
+                    case 7: //delete a saved directory
                         DeleteSavedDir();
                         break;
-                    case 8:
+                    case 8: //add a new directory
                         AddSavedDir();
                         break;
-                    case 9:
+                    case 9: //view saved directories
                         ViewAllDirs();
                         break;
-                    case 10:
+                    case 10: //stop program
                         stop = true;
+                        break;
+                    case 11: //run a preset backup
+                        PresetBackup();
+                        break;
+                    case 12: //view preset backups
+                        UpdatePresets();
+                        if (numPresetsSaved != 0)
+                        {
+                            Console.Clear();
+                            Console.WriteLine("\tThere are " + numPresetsSaved + " saved presets...");
+                            DisplaySavedPresets();
+                            Wait();
+                        }
+                        break;
+                    case 13: //create preset backups
+                        string tempLoad = LoadOrCreate("load from");
+                        if (tempLoad == "none") break;
+                        string tempSave = LoadOrCreate("save to");
+                        if (tempSave == "none") break;
+                        CreatePreset(tempLoad, tempSave);
+                        break;
+                    case 14: //delete preset backup
+                        RemovePreset();
+                        Wait();
                         break;
                 }
             } while (!stop);
@@ -67,6 +96,485 @@ namespace Directory_Backup
             Wait();
         } //initializes and handles the response for the program loop
 
+        static void RemovePreset()
+        {
+            if (debug)
+            {
+                Console.WriteLine("Starting RemovePreset()");
+                Wait();
+            }
+            UpdatePresets();
+            bool stop = false;
+            do
+            {
+                Console.Clear();
+
+                bool stopSelecting = false;
+                do
+                {
+                    Console.Clear();
+                    Console.WriteLine("\tAll saved presets are:");
+                    DisplaySavedPresets();
+                    Console.WriteLine("\tEnter the number you would like to remove");
+                    Console.WriteLine("\t(enter 'cancel' to return)");
+                    string selectResponse = Console.ReadLine().ToLower();
+                    if (selectResponse == "cancel")
+                    {
+                        stopSelecting = true;
+                        break;
+                    }
+                    else
+                    {
+                        bool validString = true;
+                        foreach (char c in selectResponse)
+                        {
+                            if (!Char.IsDigit(c))
+                            {
+                                validString = false;
+                                break;
+                            }
+
+                            if (!validString || selectResponse == "")
+                            {
+                                Console.WriteLine("\tInvalid response...");
+                                Wait();
+                            }
+                            else
+                            {
+                                int index = Convert.ToInt32(selectResponse);
+                                if (index >= numPresetsSaved)
+                                {
+                                    Console.WriteLine("\tThat preset does not exist...");
+                                }
+                                bool stopDeleting = false;
+                                do
+                                {
+                                    Console.Clear();
+                                    Console.WriteLine("\tYou have selected preset " + index + " - " + presets[index, 0]);
+                                    Console.WriteLine("\tThis preset copies " + presets[index, 1]);
+                                    Console.WriteLine("\tto " + presets[index, 2]);
+                                    Console.WriteLine("\tWould you like to delete this preset? (y/n)");
+                                    string yN = Console.ReadLine().ToLower();
+                                    if (yN == "n")
+                                    {
+                                        Console.Clear();
+                                        Console.WriteLine("\tPreset not removed...");
+                                        Wait();
+                                        return;
+                                    }
+                                    else if (yN == "y")
+                                    {
+                                        Console.Clear();
+                                        Console.WriteLine("\tRemoving preset...");
+
+                                        string[] lines = new string[numPresetsSaved - 1];
+                                        for (int a = 0; a < numPresetsSaved; a++)
+                                        {
+                                            if (a > index)
+                                            {
+                                                lines[a - 1] = presets[a, 0] + "|" + presets[a,1] + "|" + presets[a,2];
+                                                if (debug) Console.WriteLine("added {a}minus1 - {lines[a]}");
+                                            }
+                                            else if (a < index)
+                                            {
+                                                lines[a] = presets[a, 0] + "|" + presets[a, 1] + "|" + presets[a, 2];
+                                                if (debug) Console.WriteLine("added {a} - {lines[a]}");
+                                            }
+                                            else if (a == index && debug) Console.WriteLine($"skipping {a} - {presets[a, 0]} - {presets[a, 1]} - {presets[a, 2]}"); 
+                                        }
+
+                                        try
+                                        {
+                                            if (!File.Exists(appDir + "\\savedPresets.txt")) File.Create(appDir + "\\savedPresets.txt");
+
+                                            File.WriteAllLines(appDir + "\\savedPresets.txt", lines);
+
+                                            Console.WriteLine("\tPresets updated...");
+                                            Wait();
+                                            return;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Console.WriteLine("Error, updating unsuccessful");
+                                            Console.WriteLine(ex.Message);
+                                            Wait();
+                                        }
+                                    }
+                                } while (!stopDeleting);
+                            }
+                        }
+                    }
+
+                } while (!stopSelecting);
+
+
+
+
+
+            } while (!stop);
+        } //finds and removes a preset from the file
+
+        static string LoadOrCreate(string selectingFor)
+        {
+            if (debug)
+            {
+                Console.WriteLine("Starting LoadOrCreate()");
+                Wait();
+            }
+            bool stop = false;
+            string temp = "none";
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("\tYou are creating a preset backup...");
+                Console.WriteLine("\tWould you like the preset to " + selectingFor + " a saved directory? (y/n)");
+                Console.WriteLine("\t(enter 'cancel' to return)");
+                string response = Console.ReadLine().ToLower();
+                switch (response)
+                {
+                    case "cancel":
+                        return response;
+                    case "y":
+                        temp = LoadPath(selectingFor, true);
+                        if (temp != "none") return temp;
+                        break;
+                    case "n":
+                        temp = CreatePath(selectingFor, true);
+                        if (temp != "none") return temp;
+                        break;
+                        
+                }
+
+            } while (!stop);
+
+            return temp;
+        } //handle getting load and save directories for preset
+
+        static void CreatePreset(string load, string save)
+        {
+            if (debug)
+            {
+                Console.WriteLine($"Starting CreatePreset() with {load} and {save}");
+            }
+            if (load == "none" || save == "none") //check for empty inputs
+            {
+                Console.WriteLine("\tInvalid inputs...\n" +
+                    "\tPreset not created...");
+                Wait();
+                return;
+            }
+            bool stop = false;
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("\tThis preset will load from " + load);
+                Console.WriteLine("\tto " + save);
+                Console.WriteLine("\tIs this correct? (y/n)"); //confirm creation of preset
+                string yN = Console.ReadLine().ToLower();
+                if (yN == "y")
+                {
+                    SavePreset(load, save);
+                    return;
+                }
+                else if (yN == "n") //cancel preset
+                {
+                    Console.Clear();
+                    Console.WriteLine("\tCreating preset canceled...");
+                    Wait();
+                    return;
+                }
+            } while (!stop);
+        } //assemble the preset information
+
+        static void SavePreset(string load, string save)
+        {
+            if (debug)
+            {
+                Console.WriteLine("Starting SavePreset()");
+            }
+            UpdatePresets();
+            bool nameChosen = false;
+            string name = "none";
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("\tEnter the name for the preset..."); //get name for preset
+                Console.WriteLine("\t(names are case sensitive)");
+                name = @Console.ReadLine();
+                if (name != null && name != " " && !name.Contains('|')) nameChosen = true; //check for empty name
+                else
+                {
+                    Console.WriteLine("\tName cannot be empty or contain '|'...");
+                    Wait();
+                }
+            } while (!nameChosen);
+
+            Console.Clear();
+            Console.WriteLine("\tCreating preset " + name);
+            try
+            {
+                if (!File.Exists(appDir + "\\savedPresets.txt"))
+                {
+                    if (debug)
+                    {
+                        Console.WriteLine("File does not exist, creating file...");
+                        Wait();
+                    }
+                    File.Create(appDir + "\\savedPresets.txt");
+                }
+
+                
+                int tempNumPresetsSaved = numPresetsSaved + 1; 
+                if (debug)
+                {
+                    Console.WriteLine("Number of presets saved: " + numPresetsSaved);
+                    Console.WriteLine("TempNumber of presets saved: " + tempNumPresetsSaved);
+                    Wait();
+                }
+                string[] lines = new string[tempNumPresetsSaved];
+                for (int a = 0; a < numPresetsSaved; a++)
+                {
+                    lines[a] = presets[a, 0] + "|" + presets[a, 1] + "|" + presets[a, 2];
+                    if (debug)
+                    {
+                        Console.WriteLine($"Line {a} is {lines[a]}");
+                        Wait();
+                    }
+                }
+                lines[numPresetsSaved] = name + "|" + load + "|" + save;
+                if (debug)
+                {
+                    Console.WriteLine("New line is " + lines[numPresetsSaved]);
+                    Wait();
+                }
+                if (debug)
+                {
+                    Console.WriteLine("Attempting to write lines to file... Press ENTER to continue...");
+                    Console.ReadLine();
+                }
+                File.WriteAllLines(appDir + "\\savedPresets.txt", lines);
+
+                Console.WriteLine("\tPresets saved...");
+                Wait();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("\tError...\n" +
+                    "\tPreset save incomplete...\n" +
+                    "\tError message: " + ex.Message);
+            }
+
+        } //adds a new preset to the file
+
+        static void PresetBackup()
+        {
+            if (debug)
+            {
+                Console.WriteLine("\tStarting PresetBackup()...");
+                Wait();
+            }
+            UpdatePresets();
+            if (numPresetsSaved == 0) //if no existing presets
+            {
+                Console.WriteLine("\tPlease create a preset first...");
+                Wait();
+                return;
+            }
+
+            bool stop = false;
+            do
+            {
+                string answer;
+                bool stopSelect = false;
+                do
+                {
+                    Console.Clear();
+                    Console.WriteLine("\tEnter the number beside the preset...");
+                    Console.WriteLine("\t(enter 'cancel' to go back)");
+                    DisplaySavedPresets();
+                    answer = Console.ReadLine();
+
+                    if (answer == "cancel") stopSelect = true;
+                    else
+                    {
+                        bool isValid = true;
+                        foreach (char c in answer)
+                        {
+                            if (!Char.IsDigit(c))
+                            {
+                                isValid = false;
+                                break;
+                            }
+                        } //check for all digits
+                        if (!isValid || answer == null)
+                        {
+                            if (!isValid && debug)
+                            {
+                                Console.WriteLine("Not all digits... Press ENTER to continue...");
+                                Console.ReadLine();
+                            }
+                            if (answer == null && debug)
+                            {
+                                Console.WriteLine("Null response... Press ENTER to continue...");
+                                Console.ReadLine();
+                            }
+                            Console.WriteLine("\n\tInvalid response...");
+                            Wait();
+                        } //check for invalid
+                        else
+                        {
+                            int index = Convert.ToInt32(answer); //convert to int
+
+                            if (index <= numPresetsSaved - 1 && index >= 0) //if within index
+                            {
+                                bool stopAsk = false;
+
+                                do
+                                {
+                                    Console.Clear();
+                                    Console.WriteLine("\tYou selected preset " + index);
+                                    Console.WriteLine("\tThis preset is: " + @presets[index, 0]);
+                                    Console.WriteLine("\tThis will copy " + @presets[index, 1]);
+                                    Console.WriteLine("\tTo " + @presets[index, 2]);
+                                    Console.WriteLine("\tWould you like to run this preset? (y/n)");
+                                    string yN = Console.ReadLine().ToLower();
+                                    if (yN == "y")
+                                    {
+                                        loadDir = @presets[index, 1];
+                                        saveDir = @presets[index, 2];
+                                        AttemptDupe(true);
+                                        return;
+                                    }
+                                    else if (yN == "n") stopAsk = true;
+
+                                } while (!stopAsk);
+                            }
+                            else
+                            {
+                                if (!isValid && debug)
+                                {
+                                    Console.WriteLine("Outside index...");
+                                    Wait();
+                                }
+                                Console.WriteLine("\n\tInvalid response...\n\tPress ENTER to continue...");
+                                Console.ReadLine();
+                            }
+                        }
+                    }
+
+                } while (!stopSelect);
+                break;
+
+
+            } while (!stop);
+        } //user selects preset and runs AttemptDupe() with given values
+            
+        static void DisplaySavedPresets()
+        {
+            if (debug)
+            {
+                Console.WriteLine("Displaying all saved presets...");
+                Wait();
+            }
+            for (int a = 0; a < numPresetsSaved; a++)
+            {
+                Console.WriteLine($"\t\t{a} - {presets[a, 0]}\n" +
+                    $"\t\t\tCopy {presets[a, 1]}\n" +
+                    $"\t\t\tTo {presets[a, 2]}");
+            }
+        } //List all saved presets
+
+        static void UpdatePresets()
+        {
+            if (debug)
+            {
+                Console.WriteLine("Starting UpdatePresets()...");
+                Wait();
+            }
+
+            Console.WriteLine("\tScanning for saved presets...");
+            appDir = Directory.GetCurrentDirectory(); //get current application directory
+
+            try //attempt loading paths file
+            {
+                if (debug)
+                {
+                    Console.WriteLine("Attempting to read Presets file... Press ENTER to continue...");
+                    Console.ReadLine();
+                }
+
+                File.SetAttributes(appDir + @"\savedPresets.txt", FileAttributes.Normal); //ensure not readonly
+                string[] lines = File.ReadAllLines(appDir + @"\savedPresets.txt"); //read all saved paths
+                if (debug)
+                {
+                    Console.WriteLine("lines[] size is " + lines.Length + "... Press ENTER to continue...");
+                    Console.ReadLine();
+                }
+                numPresetsSaved = lines.Length;
+                if (debug)
+                {
+                    Console.WriteLine("numPresetsSaved is " + numPresetsSaved + "... Press ENTER to continue...");
+                    Console.ReadLine();
+                }
+                presets = new string[numPresetsSaved, 3]; //create array of saved values
+
+                if (numPresetsSaved == 0)
+                {
+                    Console.WriteLine("\tNo saved presets found...");
+                    return;
+                } //if no presets
+                else
+                {
+                    Console.WriteLine("\t" + numPresetsSaved + " saved presets");
+                    Wait();
+                } //otherwise display number of presets
+
+                for (int a = 0; a < numPresetsSaved; a++) //foreach saved string
+                {
+                    if (debug)
+                    {
+                        Console.WriteLine("Attempting to write line " + a);
+                    }
+                    string[] temp = lines[a].Split('|'); //split into name and paths
+                    if (debug)
+                    {
+                        Console.WriteLine($"line {a} is {temp[0]} + {temp[1]} + {temp[2]}");
+                    }
+                    presets[a, 0] = temp[0]; //assign values
+                    if (debug) Console.WriteLine("a,0 complete");
+                    presets[a, 1] = temp[1];
+                    if (debug) Console.WriteLine("a,1 complete");
+                    presets[a, 2] = temp[2];
+                    if (debug) Console.WriteLine("a,2 complete");
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                if (debug)
+                {
+                    Console.WriteLine("Presets file not found... Press ENTER to continue...");
+                    Console.ReadLine();
+                }
+                Console.WriteLine("\tNo Presets file found. Creating Presets file..."); //create if no file found
+                File.Create(appDir + @"\savedPresets.txt");
+                Console.WriteLine("\tPresets file created...");
+                Wait();
+            }
+            catch (Exception ex)
+            {
+                if (debug)
+                {
+                    Console.WriteLine("Unhandled Exception in UpdatePresets()...");
+                    Wait();
+                }
+                Console.WriteLine("\tError: " + ex.Message + "\n\tCould not load saved presets..."); //break on other exception
+                Wait();
+
+                return;
+            }
+        } //read in all saved presets and assign them to variables for reference
+
         static void AddSavedDir()
         {
             CreatePath("add to list");
@@ -74,204 +582,124 @@ namespace Directory_Backup
 
         static void DeleteSavedDir()
         {
-            UpdateSaves();
-            DisplaySavedDirs();
-            bool stop = false;
-
+            if (debug)
+            {
+                Console.WriteLine("Starting DeleteSavedDir()...");
+                Wait();
+            }
+            bool stopSearch = false;
             do
             {
-                Console.Clear();
-                Console.WriteLine("\tThere are " + numPathsSaved + " saved paths...\n" +
-                    "\tWould you like to remove from a list or search for a directory? (search/select)\n" +
-                    "\t(enter 'cancel' to go back)");
-                string answer = Console.ReadLine().ToLower();
-                switch (answer)
-                {
-                    case "search":
-                        bool stopSearch = false;
-                        do
-                        {
-                            Console.Clear();
-                            Console.WriteLine("\tEnter the name the path is saved under...\n" +
-                                "\t(path names are case sensitive. enter 'cancel' to go back)");
-                            string temp = Console.ReadLine();
-                            if (temp == "cancel") stopSearch = true;
-                            else
-                            {
-                                bool pathFound = false;
-                                string tempDir = "none";
-                                int index = -1;
-                                for (int a = 0; a < numPathsSaved; a++)
-                                {
-                                    if (temp == paths[a, 0])
-                                    {
-                                        pathFound = true;
-                                        tempDir = paths[a, 1];
-                                        index = a;
-                                        break;
-                                    }
-                                }
-
-                                if (!pathFound)
-                                {
-                                    Console.WriteLine("\tPath not found...");
-                                    Wait();
-                                }
-                                else
-                                {
-                                    bool askDelete = true;
-
-                                    do
-                                    {
-                                        Console.WriteLine("\nPath '" + temp + "' is: " + @tempDir);
-                                        Console.WriteLine("\nWould you like to delete this directory? (y/n)");
-                                        string response = Console.ReadLine().ToLower();
-                                        switch (response)
-                                        {
-                                            case "y":
-                                                Console.WriteLine("\tRemoving saved path. Please wait...");
-                                                string[,] tempPaths = new string[numPathsSaved - 1, 2];
-                                                for (int a = 0; a < numPathsSaved - 1; a++)
-                                                {
-                                                    if (a >= index)
-                                                    {
-                                                        tempPaths[a, 0] = paths[a + 1, 0];
-                                                        tempPaths[a, 1] = paths[a + 1, 1];
-                                                    }
-                                                    else
-                                                    {
-                                                        tempPaths[a, 0] = paths[a, 0];
-                                                        tempPaths[a, 1] = paths[a, 1];
-                                                    }
-                                                }
-                                                paths = tempPaths;
-                                                if (WritePaths()) Console.WriteLine("\tSaved path removed...");
-                                                Wait();
-                                                return;
-                                            case "n":
-                                                askDelete = false;
-                                                break;
-                                        }
-
-                                    } while (askDelete);
-
-                                }
-                            }
-                        } while (!stopSearch);
-                        break;
-                    case "select":
-                        bool stopSelect = false;
-                        do
-                        {
-                            Console.Clear();
-
-                            DisplaySavedDirs();
-                            Console.WriteLine("\n\tEnter the number beside the path to delete that directory\n\tEnter 'cancel' to go back...");
-
-                            string response = Console.ReadLine();
-
-                            if (response == "cancel")
-                            {
-                                stopSelect = true;
-                                break;
-                            }
-                            else
-                            {
-
-                                bool isValid = true;
-                                foreach (char c in response)
-                                {
-                                    if (!Char.IsDigit(c))
-                                    {
-                                        isValid = false;
-                                        break;
-                                    }
-                                }
-                                if (!isValid || response == null || response == "")
-                                {
-                                    if (!isValid && debug)
-                                    {
-                                        Console.WriteLine("Not all digits... Press ENTER to continue...");
-                                        Console.ReadLine();
-                                    }
-                                    if (response == null && debug)
-                                    {
-                                        Console.WriteLine("Null response... Press ENTER to continue...");
-                                        Console.ReadLine();
-                                    }
-                                    Console.WriteLine("\n\tInvalid response...");
-                                    Wait();
-                                }
-                                else
-                                {
-                                    int index = Convert.ToInt32(response);
-
-                                    if (index <= numPathsSaved - 1 && index >= 0)
-                                    {
-
-                                        bool askDelete = true;
-
-                                        do
-                                        {
-                                            Console.WriteLine("\nPath '" + index + "' is: " + paths[index,1]);
-                                            Console.WriteLine("\nWould you like to delete this directory? (y/n)");
-                                            string ans = Console.ReadLine().ToLower();
-                                            switch (ans)
-                                            {
-                                                case "y":
-                                                    Console.WriteLine("\tRemoving saved path. Please wait...");
-                                                    string[,] tempPaths = new string[numPathsSaved - 1, 2];
-                                                    for (int a = 0; a < numPathsSaved - 1; a++)
-                                                    {
-                                                        if (a >= index)
-                                                        {
-                                                            tempPaths[a, 0] = paths[a + 1, 0];
-                                                            tempPaths[a, 1] = paths[a + 1, 1];
-                                                        }
-                                                        else
-                                                        {
-                                                            tempPaths[a, 0] = paths[a, 0];
-                                                            tempPaths[a, 1] = paths[a, 1];
-                                                        }
-                                                    }
-                                                    paths = new string[tempPaths.Length, 2];
-                                                    paths = tempPaths;
-                                                    if (WritePaths()) Console.WriteLine("\tSaved path removed...");
-                                                    Wait();
-                                                    return;
-                                                case "n":
-                                                    askDelete = false;
-                                                    break;
-                                            }
-
-                                        } while (askDelete);
-                                    }
-                                    else
-                                    {
-                                        if (!isValid && debug)
-                                        {
-                                            Console.WriteLine("Outside index... Press ENTER to continue...");
-                                            Console.ReadLine();
-                                        }
-                                        Console.WriteLine("\n\tInvalid response...\n\tPress ENTER to continue...");
-                                        Console.ReadLine();
-                                    }
-                                }
-                            }
-
-
-                        } while (!stopSelect);
-                        break;
-                    case "cancel":
-                        stop = true;
-                        break;
+                if (debug) 
+                { 
+                    Console.WriteLine("Asking for response...");
+                    Wait(); 
                 }
-            } while (!stop);
+                Console.Clear();
+                DisplaySavedDirs();
+                Console.WriteLine("\tEnter the number of the path you would like to remove...\n" +
+                    "\t(enter 'cancel' to return)");
+                string response = Console.ReadLine().ToLower();
+                if (response == "cancel") return;
+                else
+                {
+                    bool isValid = true;
+                    if (response == null || response == " ")
+                    {
+                        if (debug) Console.WriteLine("Null response...");
+                        isValid = false;
+                    }
+                    foreach (char c in response)
+                    {
+                        if (!Char.IsDigit(c))
+                        {
+                            if (debug) Console.WriteLine("Not all digits...");
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    if (!isValid)
+                    {
+                        Console.WriteLine("\tInvalid response...");
+                        Wait();
+                    }
+                    else
+                    {
+                        int index = Convert.ToInt32(response);
+                        if (index > numPathsSaved - 1)
+                        {
+                            if (debug) Console.WriteLine("Out of index bounds");
+                            Console.WriteLine("\tInvalid response...");
+                            Wait();
+                        }
+                        else
+                        {
+                            bool stopDelete = false;
+                            do
+                            {
+                                Console.Clear();
+                                Console.WriteLine($"\tPath {index} is {paths[index, 0]} - {paths[index, 1]}");
+                                Console.WriteLine("\tWould you like to delete this path? (y/n)");
+                                string yN = Console.ReadLine().ToLower();
+                                if (yN == "n") return;
+                                else if (yN == "y")
+                                {
+                                    if (debug) Console.WriteLine("Beginning removal process");
+                                    Console.WriteLine("\tRemoving saved path...");
+                                    string[] tempPaths = new string[numPathsSaved - 1];
+                                    for (int a = 0; a < numPathsSaved; a++)
+                                    {
+                                        if (a < index)
+                                        {
+                                            tempPaths[a] = paths[a, 0] + "|" + paths[a, 1];
+                                            if (debug) Console.WriteLine($"Index {a} added, {tempPaths[a]}");
+                                        }
+                                        else if (a > index)
+                                        {
+                                            tempPaths[a - 1] = paths[a, 0] + "|" + paths[a, 1];
+                                            if (debug) Console.WriteLine($"Index {a} added, {tempPaths[a - 1]}");
+                                        }
+                                        else if (debug) Console.WriteLine($"Index {a} skipped, {paths[a, 0]}|{paths[a, 1]}");
+                                    }
+                                    if (debug)
+                                    {
+                                        Console.WriteLine("New array created...");
+                                        Wait();
+                                    }
+
+                                    try
+                                    {
+                                        if (debug)
+                                        {
+                                            Console.WriteLine("Starting file writing");
+                                            Wait();
+                                        }
+                                        if (!File.Exists(appDir + "\\savedPaths.txt")) File.Create(appDir + "\\savedPaths.txt");
+
+                                        File.WriteAllLines(appDir + "\\savedPaths.txt", tempPaths);
+                                        Console.WriteLine("\tSaved paths updated succesfully...");
+                                        Wait();
+                                        return;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine("\tError - Update unsuccessful...");
+                                        Console.WriteLine(ex.Message);
+                                        Wait();
+                                        return;
+                                    }
+                                }
+                            } while (!stopDelete);
+                        }
+                    }
+                }
+            } while (!stopSearch);
         } //Remove a saved directory
 
         static bool WritePaths()
         {
 
+            UpdateSaves();
             string[] tempPaths = new string[paths.GetLength(0)];
             for (int a = 0; a < paths.GetLength(0); a++)
             {
@@ -338,40 +766,58 @@ namespace Directory_Backup
             foreach (DirectoryInfo dir in source.GetDirectories())
                 CopyFilesRecursively(dir, target.CreateSubdirectory(dir.Name));
             foreach (FileInfo file in source.GetFiles())
+            {
+                if (displayMovedFiles) Console.WriteLine("\tTransferring " + file.Name + "...");
                 file.CopyTo(Path.Combine(target.FullName, file.Name));
+                if (displayMovedFiles)Console.WriteLine("\t" + file.Name + " transfered...");
+            }
         } //Copy each file and folder in the given directory to the second directory
 
-        static void AttemptDupe()
+        static void AttemptDupe(bool preset = false)
         {
-            bool goodFolder = false;
-            string folder;
-            do
+            string dateTime = "if you see this, there was an error LOL";
+            if (!preset)
             {
-                Console.WriteLine("\tEnter the folder name for the duplication...");
-                folder = Console.ReadLine();
-                bool validFolder = true;
-                foreach (char c in folder)
+                bool goodFolder = false;
+                string folder;
+                do
                 {
-                    if (c == '/' || c == '|' || c == ':' || c == '?' || c == '*' || c == '<' || c == '>' || c == '"' || c == '\\')
+                    Console.WriteLine("\tEnter the folder name for the duplication...");
+                    folder = Console.ReadLine();
+                    bool validFolder = true;
+                    foreach (char c in folder)
                     {
-                        validFolder = false;
-                        break;
+                        if (c == '/' || c == '|' || c == ':' || c == '?' || c == '*' || c == '<' || c == '>' || c == '"' || c == '\\')
+                        {
+                            validFolder = false;
+                            break;
+                        }
                     }
-                }
-                if (validFolder)
+                    if (validFolder)
+                    {
+                        goodFolder = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("\tInvalid folder name. Folder names cannot contain the following: / | : ? * < > \"");
+                        Wait();
+                    }
+
+
+                } while (!goodFolder);
+
+                saveDir += '\\' + folder;
+            }
+            else
+            {
+                dateTime = DateTime.Now.ToString("MM.dd.yy-hh.mm.ss");
+                if (debug)
                 {
-                    goodFolder = true;
-                }
-                else
-                {
-                    Console.WriteLine("\tInvalid folder name. Folder names cannot contain the following: / | : ? * < > \"");
+                    Console.WriteLine("temp datetime is " + dateTime);
                     Wait();
                 }
-
-
-            } while (!goodFolder);
-
-            saveDir += '\\' + folder;
+                saveDir += '\\' + dateTime;
+            } //if preset use date&time as folder name
 
             bool failed = false;
             try
@@ -396,10 +842,11 @@ namespace Directory_Backup
             if (!failed)
             {
                 Console.WriteLine("\tDuplication seccesful...");
+                if (preset) Console.WriteLine("\tFolder name is " + dateTime);
                 ResetDirs();
                 Wait();
                 duping = false;
-                
+
             }
         } //Attempt to copy the files
 
@@ -417,158 +864,80 @@ namespace Directory_Backup
             Console.WriteLine("\tDirectories reset...");
         } //Reset the active directories to "none"
 
-        static string LoadPath(string currentProcess)
+        static string LoadPath(string currentProcess, bool isPreset = false)
         {
 
             UpdateSaves();
-            bool stop = false;
 
+
+            bool stopSelect = false;
             do
             {
                 Console.Clear();
-                Console.WriteLine("\tThere are " + numPathsSaved + " saved paths...\n" +
-                    "\tWould you like to select from a list or search for a directory? (search/select)\n" +
-                    "\t(enter 'cancel' to go back)");
-                string answer = Console.ReadLine().ToLower();
-                switch (answer)
+                DisplaySavedDirs();
+                if (!isPreset) Console.WriteLine($"\tEnter the number of the path you would like to {currentProcess}...");
+                else Console.WriteLine($"\tEnter the number of the path you would like the preset to {currentProcess}...");
+                    Console.WriteLine("\t(enter 'cancel' to go back)");
+                string temp = Console.ReadLine();
+                if (temp == "cancel") stopSelect = true;
+                else
                 {
-                    case "search":
-                        bool stopSearch = false;
-                        do
+                    bool isValid = true;
+                    if (temp == null || temp == " ")
+                    {
+                        if (debug) Console.WriteLine("Null response...");
+                        isValid = false;
+                    }
+                    foreach (char c in temp)
+                    {
+                        if (!Char.IsDigit(c))
                         {
-                            Console.Clear();
-                            Console.WriteLine("\tEnter the name the path is saved under...\n" +
-                                "\t(path names are case sensitive. enter 'cancel' to go back)");
-                            string temp = Console.ReadLine();
-                            if (temp == "cancel") stopSearch = true;
-                            else
-                            {
-                                bool pathFound = false;
-                                string tempDir = "none";
-                                for (int a = 0; a < numPathsSaved; a++)
-                                {
-                                    if (temp == paths[a, 0])
-                                    {
-                                        pathFound = true;
-                                        tempDir = paths[a, 1];
-                                        break;
-                                    }
-                                }
+                            if (debug) Console.WriteLine("not all digits...");
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    if (!isValid)
+                    {
+                        Console.WriteLine("\tInvalid response...");
+                        Wait();
+                    }
+                    else
+                    {
 
-                                if (!pathFound)
-                                {
-                                    Console.WriteLine("\tPath not found...");
-                                    Wait();
-                                }
-                                else
-                                {
-                                    bool askLoad = true;
+                        int index = Convert.ToInt32(temp);
 
-                                    do
-                                    {
-                                        Console.WriteLine("\nPath '" + temp + "' is: " + @tempDir);
-                                        Console.WriteLine("\nWould you like to " + currentProcess + " this directory? (y/n)");
-                                        string response = Console.ReadLine().ToLower();
-                                        switch (response)
-                                        {
-                                            case "y":
-                                                return tempDir;
-                                            case "n":
-                                                tempDir = "none";
-                                                askLoad = false;
-                                                break;
-                                        }
-
-                                    } while (askLoad);
-
-                                }
-                            }
-                        } while (!stopSearch);
-                        break;
-                    case "select":
-                        bool stopSelect = false;
-                        do
+                        if (index > numPathsSaved - 1)
                         {
-                            Console.Clear();
+                            if (debug) Console.WriteLine("Outside of index...");
+                            Console.WriteLine("\tInvalid response...");
+                            Wait();
+                        }
+                        else
+                        { 
+                            bool stopConfirm = false;
 
-                            DisplaySavedDirs();
-                            Console.WriteLine("\n\tEnter the number beside the path to " + currentProcess + " that directory\n\tEnter 'cancel' to go back...");
-
-                            string response = Console.ReadLine();
-
-                            if (response == "cancel")
+                            do
                             {
-                                stopSelect = true;
-                                break;
-                            }
-                            else
-                            {
-
-                                bool isValid = true;
-                                foreach (char c in response)
+                                Console.Clear();
+                                Console.WriteLine("\nPath '" + temp + "' is: " + paths[index, 0] + "|" + paths[index, 1]);
+                                if (!isPreset) Console.WriteLine("\nWould you like to " + currentProcess + " this directory? (y/n)");
+                                else Console.WriteLine("\nWould you like the preset to " + currentProcess + " this directory? (y/n)");
+                                string response = Console.ReadLine().ToLower();
+                                switch (response)
                                 {
-                                    if (!Char.IsDigit(c))
-                                    {
-                                        isValid = false;
+                                    case "y":
+                                        return paths[index , 1];
+                                    case "n":
+                                        stopConfirm = true;
                                         break;
-                                    }
                                 }
-                                if (!isValid || response == null)
-                                {
-                                    if (!isValid && debug)
-                                    {
-                                        Console.WriteLine("Not all digits... Press ENTER to continue...");
-                                        Console.ReadLine();
-                                    }
-                                    if (response==null && debug)
-                                    {
-                                        Console.WriteLine("Null response... Press ENTER to continue...");
-                                        Console.ReadLine();
-                                    }
-                                    Console.WriteLine("\n\tInvalid response...");
-                                    Wait();
-                                }
-                                else
-                                {
-                                    int index = Convert.ToInt32(response);
-
-                                    if (index <= numPathsSaved -1 && index >= 0)
-                                    {
-                                        bool stopAsk = false;
-
-                                        do
-                                        {
-                                            Console.Clear();
-                                            Console.WriteLine("\tYou selected path " + index);
-                                            Console.WriteLine("\tThis path is: " + @paths[index, 1]);
-                                            Console.WriteLine("\tWould you like to " + currentProcess + " this directory? (y/n)");
-                                            string yN = Console.ReadLine().ToLower();
-                                            if (yN == "y") return @paths[index, 1];
-                                            else if (yN == "n") stopAsk = true;
-
-                                        } while (!stopAsk);
-                                    }
-                                    else
-                                    {
-                                        if (!isValid && debug)
-                                        {
-                                            Console.WriteLine("Outside index... Press ENTER to continue...");
-                                            Console.ReadLine();
-                                        }
-                                        Console.WriteLine("\n\tInvalid response...\n\tPress ENTER to continue...");
-                                        Console.ReadLine();
-                                    }
-                                }
-                            }
-
-
-                        } while (!stopSelect);
-                        break;
-                    case "cancel":
-                        stop = true;
-                        break;
+                            } while (!stopConfirm);
+                        }
+                    }
                 }
-            } while (!stop);
+            } while (!stopSelect);
+
 
             return "none";
 
@@ -593,7 +962,7 @@ namespace Directory_Backup
                     Console.ReadLine();
                 }
 
-                File.SetAttributes(appDir + @"\savedPaths.txt", FileAttributes.Normal);
+                File.SetAttributes(appDir + @"\savedPaths.txt", FileAttributes.Normal); //ensure not readonly
                 string[] lines = File.ReadAllLines(appDir + @"\savedPaths.txt"); //read all saved paths
                 if (debug)
                 {
@@ -631,15 +1000,14 @@ namespace Directory_Backup
 
                 if (debug)
                 {
-                    Console.WriteLine("File not found... Press ENTER to continue...");
+                    Console.WriteLine("Save file not found... Press ENTER to continue...");
                     Console.ReadLine();
                 }
                 Console.WriteLine("\tNo save file found. Creating save file..."); //create if no file found
                 File.Create(appDir + @"\savedPaths.txt");
                 Console.WriteLine("\tSave file created...");
-                Console.WriteLine("\tPress ENTER to continue...");
-                Console.ReadLine();
-                UpdateSaves();
+                numPathsSaved = 0;
+                Wait();
             }
             catch (Exception ex)
             {
@@ -655,7 +1023,7 @@ namespace Directory_Backup
             }
         } //Update the save file of paths
 
-        static string CreatePath(string currentProcess)
+        static string CreatePath(string currentProcess, bool isPreset = false)
         {
 
             if (debug)
@@ -677,7 +1045,8 @@ namespace Directory_Backup
 
                 bool validDir = true;
                 Console.Clear();
-                Console.WriteLine("\tEnter the directory you would like to " + currentProcess);
+                if (!isPreset) Console.WriteLine("\tEnter the directory you would like to " + currentProcess);
+                else Console.WriteLine("\tEnter the directory you would like the preset to " + currentProcess);
                 tempDir = @Console.ReadLine();
 
                 foreach (char c in tempDir)
@@ -919,7 +1288,6 @@ namespace Directory_Backup
 
         static int Menu()
         {
-            UpdateSaves();
             bool stop = false; //create stop condition
 
             do //loop
@@ -935,6 +1303,11 @@ namespace Directory_Backup
                             string answer = Console.ReadLine().ToLower();
                             if (answer == "y") return 1;
                             else if (answer == "n") return 2;
+                            else if (answer == "cancel")
+                            {
+                                duping = false;
+                                return 6;
+                            }
                         }
                         else return 2; //if no loaded paths return
                     }
@@ -946,6 +1319,11 @@ namespace Directory_Backup
                             string answer = Console.ReadLine().ToLower();
                             if (answer == "y") return 3;
                             else if (answer == "n") return 4;
+                            else if (answer == "cancel")
+                            {
+                                duping = false;
+                                return 6;
+                            }
                         }
 
                     }
@@ -971,24 +1349,36 @@ namespace Directory_Backup
                 {
                     Console.WriteLine("\tWhat would you like to do?\n" +
                         "\t\t0 - Duplicate a directory\n" +
-                        "\t\t1 - View all saved paths\n" +
-                        "\t\t2 - Remove a saved path\n" +
-                        "\t\t3 - Save a new path\n" +
-                        "\t\t4 - Stop program");
+                        "\t\t1 - Run a preset backup\n" +
+                        "\t\t2 - View all saved paths\n" +
+                        "\t\t3 - Remove a saved path\n" +
+                        "\t\t4 - Save a new path\n" +
+                        "\t\t5 - View all saved preset backups\n" +
+                        "\t\t6 - Remove a saved preset backup\n" +
+                        "\t\t7 - Save a new preset backup\n" +
+                        "\t\t8 - Stop program");
                     string toDo = Console.ReadLine();
 
                     switch (toDo)
                     {
-                        case "0":
+                        case "0": //dupilcate directory
                             duping = true;
                             break;
-                        case "1":
+                        case "1": //run preset backup
+                            return 11;
+                        case "2": //view all saved directories
                             return 9;
-                        case "2":
+                        case "3": //delete saved directory
                             return 7;
-                        case "3":
+                        case "4": //save new directory
                             return 8;
-                        case "4":
+                        case "5": //view preset backups
+                            return 12;
+                        case "6": //remove preset backup
+                            return 14;
+                        case "7": //create new preset backup
+                            return 13;
+                        case "8": //stop
                             return 10;
                     }
                 }
