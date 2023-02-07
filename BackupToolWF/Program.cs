@@ -229,6 +229,25 @@ namespace BackupToolWF
 
         public static bool DuplicateFiles(string input, string output)
         {
+            string[] temp = @input.Split('\\');
+            int lastIndex = temp.length - 1;
+            string tempDirLastPart;
+            if (temp[lastIndex] == null || temp[lastIndex] == "") tempDirLastPart = temp[lastIndex - 1];
+            else tempDirLastPart = temp[lastIndex];
+            if (!output.Contains(tempDirLastPart))
+            {
+                string[] temp2 = @output.Split('\\');
+                string tempOutLastPart = temp2[temp2.Length - 1];
+                tempOutLastPart = tempDirLastPart + tempOutLastPart;
+                
+                output = "";
+                for (int a = 0; a < temp2.Length - 1; a++)
+                {
+                    output += temp2[a];
+                }
+                output += tempOutLastPart;
+            }
+
             Form working = new movingFiles();
             working.Show();
             try
