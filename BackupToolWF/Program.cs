@@ -103,6 +103,42 @@ namespace BackupToolWF
             return true;
         }
 
+        static public bool AccessibleDirectory(string dir)
+        {
+            //return value starts as true
+            bool temp = true;
+
+            //try-catch for exception handling
+            try
+            {
+                //if directory does not exist, create directory
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+                //write a test file to check for access
+                File.WriteAllLines(dir + "\\test.txt", new string[] { "test file" });
+            }
+            //catch program cannot access dir
+            catch (UnauthorizedAccessException)
+            {
+                //display message, mark as invalid
+                MessageBox.Show("The program cannot access that directory.\nTry running the program as an administrator, or changing the security of the directory");
+                temp = false;
+            }
+            //generic exception
+            catch (Exception ex)
+            {
+                //dispaly message, mark as invalid
+                MessageBox.Show("Error: " + ex.Message);
+                temp = false;
+            }
+            finally
+            {
+                //delete temp file, return validit
+                if (File.Exists(dir + "\\test.txt")) File.Delete(dir + "\\test.txt");
+            }
+            return temp;
+        }
+
         public static string[] LoadPaths()
         {
             try

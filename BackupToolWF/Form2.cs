@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -22,15 +23,21 @@ namespace BackupToolWF
             //grab parent form and relevant values
             mainMenu = main;
             versionLabel.Text = Program.versionText;
-            newSaveInputLabel.Text = newSaveOutputLabel.Text = "";
 
+            ResetForm();
+        }
+
+        private void ResetForm()
+        {
             loadedPaths = Program.LoadPaths(); //load saved paths
             loadedPresets = Program.LoadPresets(); //loads current preset names
+
+
             if (loadedPaths.Length == 0) //if no loaded paths exist
             {
                 //set accessibility for input directory options
                 loadNewPathOption.Checked = true;
-                loadNewPathEntry.Enabled = true;
+                browseInput.Enabled = true;
                 loadSavedPathOption.Checked = false;
                 loadSavedPathOption.Enabled = false;
                 loadSavedPathList.Enabled = false;
@@ -38,10 +45,10 @@ namespace BackupToolWF
 
                 //set accessibility for output directory options
                 duplicateToNewPathOption.Checked = true;
-                duplicateToNewPathEntry.Enabled = true;
+                browseOutput.Enabled = true;
                 duplicateToSavedPathOption.Checked = false;
                 duplicateToSavedPathOption.Enabled = false;
-                duplicateToSavedPathList.Enabled = false; 
+                duplicateToSavedPathList.Enabled = false;
                 outputToSave = false;
             }
             else //if loaded paths do exist
@@ -50,14 +57,14 @@ namespace BackupToolWF
                 loadSavedPathOption.Checked = true;
                 loadSavedPathList.Enabled = true;
                 loadNewPathOption.Checked = false;
-                loadNewPathEntry.Enabled = false;
+                browseInput.Enabled = false;
                 inputFromSave = true;
 
                 //set accessibility for output directory options
                 duplicateToSavedPathOption.Checked = true;
                 duplicateToSavedPathList.Enabled = true;
                 duplicateToNewPathOption.Checked = false;
-                duplicateToNewPathEntry.Enabled = false;
+                browseOutput.Enabled = false;
                 outputToSave = true;
 
                 for (int a = 0; a < loadedPaths.Length; a++)
@@ -68,6 +75,7 @@ namespace BackupToolWF
             }
 
             //set enabled state of buttons on startup
+            newSaveInputLabel.Text = newSaveOutputLabel.Text = "";
             saveNewLoadPathOption.Enabled = false;
             saveNewSavePathOption.Enabled = false;
             makePresetNameEntry.Enabled = false;
@@ -77,6 +85,7 @@ namespace BackupToolWF
 
         private void duplicateToNewPathEntry_TextChanged(object sender, EventArgs e) //when new input path string is edited
         {
+            /*
             if (duplicateToNewPathEntry.Text != null && duplicateToNewPathEntry.Text != "") //check for empty string
             {
                 hasNewOutput = true;
@@ -90,6 +99,7 @@ namespace BackupToolWF
             }
             newSaveOutputLabel.Text = duplicateToNewPathEntry.Text;
             duplicateButton.Enabled = CheckForValidDupe(); //check if the duplicate button is now enabled
+            */
         }
 
         private void duplicateToSavedPathOption_CheckedChanged(object sender, EventArgs e)
@@ -205,17 +215,58 @@ namespace BackupToolWF
             duplicateButton.Enabled = CheckForValidDupe();
         }
 
+        private void browseInput_Click(object sender, EventArgs e)
+        {
+            //temp string for reference
+            string tempDir = "";
+
+            //create a new folder browser window
+            FolderBrowserDialog browser = new FolderBrowserDialog();
+            browser.Description = "Select input folder";
+            browser.UseDescriptionForTitle = true;
+
+            //if valid result from the dialogue
+            if (browser.ShowDialog() == DialogResult.OK)
+            {
+                //set the chosen directory to the temp value
+                tempDir = browser.SelectedPath;
+            }
+        }
+
+        private void browseOutput_Click(object sender, EventArgs e)
+        {
+            //temp string for reference
+            string tempDir = "";
+
+            //create a new folder browser window
+            FolderBrowserDialog browser = new FolderBrowserDialog();
+            browser.Description = "Select output folder";
+            browser.UseDescriptionForTitle = true;
+
+            //if valid result from the dialogue
+            if (browser.ShowDialog() == DialogResult.OK)
+            {
+                //set the chosen directory to the temp value
+                tempDir = browser.SelectedPath;
+            }
+
+            //Check for progrem access to directory
+            //if program has access, set the new directory to the value of the textbox
+            if (Program.AccessibleDirectory(tempDir)) duplicateToNewPathEntry.Text = tempDir;
+            //message appears during call to Preferences.AccessibleDirectory if the directory is inaccessible
+        }
+
         private void duplicateToNewPathOption_CheckedChanged(object sender, EventArgs e)
         {
             if (duplicateToNewPathOption.Checked) //if this is now checked
             {
-                duplicateToNewPathEntry.Enabled = true; //enable related option and uncheck the other option
+                browseOutput.Enabled = true; //enable related option and uncheck the other option
                 duplicateToSavedPathOption.Checked = false;
                 outputToSave = false;
             }
             else
             {
-                loadNewPathEntry.Enabled = false; //if no longer checked disable related option
+                browseOutput.Enabled = false; //if no longer checked disable related option
                 outputToSave = true;
             }
 
@@ -229,6 +280,7 @@ namespace BackupToolWF
 
         private void loadNewPathEntry_TextChanged(object sender, EventArgs e)
         {
+            /*
             if (loadNewPathEntry.Text != null && loadNewPathEntry.Text != "")
             {
                 hasNewInput = true;
@@ -242,6 +294,7 @@ namespace BackupToolWF
             }
             newSaveInputLabel.Text = loadNewPathEntry.Text;
             duplicateButton.Enabled = CheckForValidDupe();
+            */
         }
 
         private void loadSavedPathOption_CheckedChanged(object sender, EventArgs e)
@@ -288,14 +341,14 @@ namespace BackupToolWF
         {
             if (loadNewPathOption.Checked) //if this is now checked
             {
-                loadNewPathEntry.Enabled = true; //enable related option and uncheck the other option
+                browseInput.Enabled = true; //enable related option and uncheck the other option
                 loadSavedPathOption.Checked = false;
                 inputFromSave = false;
                 saveNewLoadPathOption.Enabled = true;
             }
             else
             {
-                loadNewPathEntry.Enabled = false; //if no longer checked disable related option
+                browseInput.Enabled = false; //if no longer checked disable related option
                 inputFromSave = true;
             }
 
