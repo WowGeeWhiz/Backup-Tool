@@ -31,12 +31,14 @@
             this.versionLabel = new System.Windows.Forms.Label();
             this.backButton = new System.Windows.Forms.Button();
             this.directoryToDuplicateGroup = new System.Windows.Forms.GroupBox();
+            this.browseInput = new System.Windows.Forms.Button();
             this.loadSavedPathList = new System.Windows.Forms.ListBox();
             this.loadNewPathEntry = new System.Windows.Forms.TextBox();
             this.loadNewPathOption = new System.Windows.Forms.RadioButton();
             this.loadSavedPathOption = new System.Windows.Forms.RadioButton();
             this.duplicatingDirectoryLabel = new System.Windows.Forms.Label();
             this.duplicateToGroup = new System.Windows.Forms.GroupBox();
+            this.browseOutput = new System.Windows.Forms.Button();
             this.duplicateToSavedPathList = new System.Windows.Forms.ListBox();
             this.duplicateToNewPathEntry = new System.Windows.Forms.TextBox();
             this.duplicateToSavedPathOption = new System.Windows.Forms.RadioButton();
@@ -49,6 +51,7 @@
             this.newSaveInputLabel = new System.Windows.Forms.Label();
             this.newSaveOutputLabel = new System.Windows.Forms.Label();
             this.duplicatePresetNameText = new System.Windows.Forms.Label();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.directoryToDuplicateGroup.SuspendLayout();
             this.duplicateToGroup.SuspendLayout();
             this.SuspendLayout();
@@ -79,6 +82,7 @@
             // 
             this.directoryToDuplicateGroup.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.directoryToDuplicateGroup.AutoSize = true;
+            this.directoryToDuplicateGroup.Controls.Add(this.browseInput);
             this.directoryToDuplicateGroup.Controls.Add(this.loadSavedPathList);
             this.directoryToDuplicateGroup.Controls.Add(this.loadNewPathEntry);
             this.directoryToDuplicateGroup.Controls.Add(this.loadNewPathOption);
@@ -91,6 +95,16 @@
             this.directoryToDuplicateGroup.TabIndex = 3;
             this.directoryToDuplicateGroup.TabStop = false;
             this.directoryToDuplicateGroup.Text = "Directory to duplicate";
+            // 
+            // browseInput
+            // 
+            this.browseInput.Location = new System.Drawing.Point(545, 25);
+            this.browseInput.Name = "browseInput";
+            this.browseInput.Size = new System.Drawing.Size(94, 29);
+            this.browseInput.TabIndex = 4;
+            this.browseInput.Text = "Browse";
+            this.browseInput.UseVisualStyleBackColor = true;
+            this.browseInput.Click += new System.EventHandler(this.browseInput_Click);
             // 
             // loadSavedPathList
             // 
@@ -107,11 +121,12 @@
             // loadNewPathEntry
             // 
             this.loadNewPathEntry.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.loadNewPathEntry.Enabled = false;
             this.loadNewPathEntry.Location = new System.Drawing.Point(309, 25);
             this.loadNewPathEntry.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.loadNewPathEntry.Name = "loadNewPathEntry";
-            this.loadNewPathEntry.PlaceholderText = "C:\\Documents";
-            this.loadNewPathEntry.Size = new System.Drawing.Size(329, 27);
+            this.loadNewPathEntry.PlaceholderText = "New Input Directory";
+            this.loadNewPathEntry.Size = new System.Drawing.Size(230, 27);
             this.loadNewPathEntry.TabIndex = 2;
             this.loadNewPathEntry.TextChanged += new System.EventHandler(this.loadNewPathEntry_TextChanged);
             // 
@@ -154,6 +169,7 @@
             // duplicateToGroup
             // 
             this.duplicateToGroup.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.duplicateToGroup.Controls.Add(this.browseOutput);
             this.duplicateToGroup.Controls.Add(this.duplicateToSavedPathList);
             this.duplicateToGroup.Controls.Add(this.duplicateToNewPathEntry);
             this.duplicateToGroup.Controls.Add(this.duplicateToSavedPathOption);
@@ -166,6 +182,16 @@
             this.duplicateToGroup.TabIndex = 5;
             this.duplicateToGroup.TabStop = false;
             this.duplicateToGroup.Text = "Duplicating to";
+            // 
+            // browseOutput
+            // 
+            this.browseOutput.Location = new System.Drawing.Point(545, 23);
+            this.browseOutput.Name = "browseOutput";
+            this.browseOutput.Size = new System.Drawing.Size(94, 29);
+            this.browseOutput.TabIndex = 5;
+            this.browseOutput.Text = "Browse";
+            this.browseOutput.UseVisualStyleBackColor = true;
+            this.browseOutput.Click += new System.EventHandler(this.browseOutput_Click);
             // 
             // duplicateToSavedPathList
             // 
@@ -182,11 +208,12 @@
             // duplicateToNewPathEntry
             // 
             this.duplicateToNewPathEntry.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.duplicateToNewPathEntry.Enabled = false;
             this.duplicateToNewPathEntry.Location = new System.Drawing.Point(309, 21);
             this.duplicateToNewPathEntry.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.duplicateToNewPathEntry.Name = "duplicateToNewPathEntry";
-            this.duplicateToNewPathEntry.PlaceholderText = "C:\\Documents";
-            this.duplicateToNewPathEntry.Size = new System.Drawing.Size(329, 27);
+            this.duplicateToNewPathEntry.PlaceholderText = "New Output Directory";
+            this.duplicateToNewPathEntry.Size = new System.Drawing.Size(230, 27);
             this.duplicateToNewPathEntry.TabIndex = 6;
             this.duplicateToNewPathEntry.TextChanged += new System.EventHandler(this.duplicateToNewPathEntry_TextChanged);
             // 
@@ -344,7 +371,6 @@
         private GroupBox duplicateToGroup;
         private RadioButton loadNewPathOption;
         private RadioButton loadSavedPathOption;
-        private TextBox loadNewPathEntry;
         private ListBox loadSavedPathList;
         private ListBox duplicateToSavedPathList;
         private TextBox duplicateToNewPathEntry;
@@ -358,5 +384,9 @@
         private Label newSaveInputLabel;
         private Label newSaveOutputLabel;
         private Label duplicatePresetNameText;
+        private Button browseInput;
+        private Button browseOutput;
+        private FolderBrowserDialog folderBrowserDialog1;
+        private TextBox loadNewPathEntry;
     }
 }

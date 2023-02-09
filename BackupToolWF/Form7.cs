@@ -58,6 +58,58 @@ namespace BackupToolWF
             createNewPresetButton.Enabled = CheckForButtonEnabled();
         }
 
+        private void browseInput_Click(object sender, EventArgs e)
+        {
+            //temp string for reference
+            string tempDir = "";
+
+            //create a new folder browser window
+            FolderBrowserDialog browser = new FolderBrowserDialog();
+            browser.Description = "Select input folder";
+            browser.UseDescriptionForTitle = true;
+
+            //if valid result from the dialogue
+            if (browser.ShowDialog() == DialogResult.OK)
+            {
+                //set the chosen directory to the temp value
+                tempDir = browser.SelectedPath;
+                if (Program.debug) MessageBox.Show("File dialogue returned " + tempDir);
+            }
+
+            presetInputEntryBox.Text = tempDir;
+
+            if (tempDir != null && tempDir != "") inputEntered = true;
+            else inputEntered = false;
+
+            createNewPresetButton.Enabled = CheckForButtonEnabled();
+        }
+
+        private void browseOutput_Click(object sender, EventArgs e)
+        {
+            //temp string for reference
+            string tempDir = "";
+
+            //create a new folder browser window
+            FolderBrowserDialog browser = new FolderBrowserDialog();
+            browser.Description = "Select output folder";
+            browser.UseDescriptionForTitle = true;
+
+            //if valid result from the dialogue
+            if (browser.ShowDialog() == DialogResult.OK)
+            {
+                //set the chosen directory to the temp value
+                tempDir = browser.SelectedPath;
+                if (Program.debug) MessageBox.Show("File dialogue returned " + tempDir);
+            }
+
+            presetOutputEntryBox.Text = tempDir;
+
+            if (tempDir != null && tempDir != "") outputEntered = true;
+            else inputEntered = false;
+
+            createNewPresetButton.Enabled = CheckForButtonEnabled();
+        }
+
         private void backButton_Click(object sender, EventArgs e)
         {
             Program.ReturnToForm(this, mainMenu);

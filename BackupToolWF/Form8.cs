@@ -37,7 +37,7 @@ namespace BackupToolWF
             deletePathEntry.Text = "";
             deletePathEntry.PlaceholderText = "";
             addPathEntry.Text = "";
-            addPathButton.Enabled = false;
+            addNewPathButton.Enabled = false;
             
             foreach (string s in loadedPaths)
             {
@@ -63,17 +63,54 @@ namespace BackupToolWF
         private void deletePathEntry_TextChanged(object sender, EventArgs e)
         {
             if (deletePathEntry.Text == "" || deletePathEntry.Text == null) return;
-            if (deletePathEntry.Text == loadedPaths[pathList.SelectedIndex]) deletePathButton.Enabled = true;
+            if (deletePathEntry.Text == "Delete") deletePathButton.Enabled = true;
             else deletePathButton.Enabled = false;
         }
 
-        private void addPathEntry_TextChanged(object sender, EventArgs e)
+        private void deletePathButton_Click(object sender, EventArgs e)
         {
-            if (addPathEntry.Text == "" || addPathEntry.Text == null) addPathButton.Enabled = false;
-            else addPathButton.Enabled = true;
+            int currentNumber = loadedPaths.Length;
+            Program.DeletePath(pathList.SelectedIndex, loadedPaths);
+            loadedPaths = Program.LoadPaths();
+            if (loadedPaths.Length < currentNumber)
+            {
+                MessageBox.Show("Path deleted successfully...");
+                ResetForm();
+            }
+            return;
         }
 
-        private void addPathButton_Click(object sender, EventArgs e)
+        private void browseButton_Click(object sender, EventArgs e)
+        {
+            //temp string for reference
+            string tempDir = "";
+
+            //create a new folder browser window
+            FolderBrowserDialog browser = new FolderBrowserDialog();
+            browser.Description = "Select output folder";
+            browser.UseDescriptionForTitle = true;
+
+            //if valid result from the dialogue
+            if (browser.ShowDialog() == DialogResult.OK)
+            {
+                //set the chosen directory to the temp value
+                tempDir = browser.SelectedPath;
+                if (Program.debug) MessageBox.Show("File dialogue returned " + tempDir);
+            }
+
+            if (tempDir != null && tempDir != "" && Program.CheckValidDirectory(tempDir))
+            {
+                addPathEntry.Text = tempDir;
+                addNewPathButton.Enabled = true;
+            }
+            else
+            {
+                addPathEntry.Text = "";
+                addNewPathButton.Enabled = false;
+            }
+        }
+
+        private void addNewPathButton_Click(object sender, EventArgs e)
         {
             if (!Program.CheckValidDirectory(addPathEntry.Text))
             {
@@ -94,19 +131,6 @@ namespace BackupToolWF
                 }
                 return;
             }
-        }
-
-        private void deletePathButton_Click(object sender, EventArgs e)
-        {
-            int currentNumber = loadedPaths.Length;
-            Program.DeletePath(pathList.SelectedIndex, loadedPaths);
-            loadedPaths = Program.LoadPaths();
-            if (loadedPaths.Length < currentNumber)
-            {
-                MessageBox.Show("Path deleted successfully...");
-                ResetForm();
-            }
-            return;
         }
     }
 }
