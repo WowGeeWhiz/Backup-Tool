@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms.VisualStyles;
 using System.Xml.Linq;
 
@@ -20,6 +21,12 @@ namespace BackupToolWF
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             Application.Run(new mainMenu());
+        }
+
+        public static void SetCursor(bool loading = true)
+        {
+            if (loading) Cursor.Current = Cursors.WaitCursor;
+            else Cursor.Current = Cursors.Default;
         }
 
         public static void StartNewForm(Form currentForm, Form newForm)
@@ -44,6 +51,7 @@ namespace BackupToolWF
 
         public static void SavePaths(List<string> newPaths, string[] currentPaths)
         {
+            SetCursor();
             string[] temp = new string[newPaths.Count + currentPaths.Length];
             for (int a = 0; a < currentPaths.Length; a++)
             {
@@ -63,16 +71,18 @@ namespace BackupToolWF
             }
             catch (Exception e)
             {
+                SetCursor(false);
                 MessageBox.Show("Error: " + e.Message);
                 return;
             }
 
-
+            SetCursor(false);
             return;
         }
 
         public static void DeletePath(int index, string[] paths)
         {
+            SetCursor();
             string[] temp = new string[paths.Length - 1];
             for (int a = 0; a < paths.Length; a++)
             {
@@ -87,10 +97,12 @@ namespace BackupToolWF
             }
             catch (Exception e)
             {
+                SetCursor(false);
                 MessageBox.Show("Error: " + e.Message);
                 return;
             }
 
+            SetCursor(false);
             return;
         }
         
@@ -105,6 +117,7 @@ namespace BackupToolWF
 
         static public bool AccessibleDirectory(string dir)
         {
+            SetCursor();
             //return value starts as true
             bool temp = true;
 
@@ -127,8 +140,10 @@ namespace BackupToolWF
             //generic exception
             catch (Exception ex)
             {
-                //dispaly message, mark as invalid
+                //display message, mark as invalid
+                SetCursor(false);
                 MessageBox.Show("Error: " + ex.Message);
+                SetCursor();
                 temp = false;
             }
             finally
@@ -136,24 +151,29 @@ namespace BackupToolWF
                 //delete temp file, return validit
                 if (File.Exists(dir + "\\test.txt")) File.Delete(dir + "\\test.txt");
             }
+            SetCursor(false);
             return temp;
         }
 
         public static string[] LoadPaths()
         {
+            SetCursor();
             try
             {
                 File.SetAttributes(applicationPath + @"\savedPaths.txt", FileAttributes.Normal); //ensure not readonly
                 string[] lines = File.ReadAllLines(applicationPath + @"\savedPaths.txt"); //read all saved paths
+                SetCursor(false);
                 return lines;
             }
             catch (FileNotFoundException)
             {
+                SetCursor(false);
                 File.Create(applicationPath + @"\savedPaths.txt");
                 return new string[0];
             }
             catch (Exception ex)
             {
+                SetCursor(false);
                 MessageBox.Show("\tError: " + ex.Message + "\n\tCould not load saved paths..."); //break on other exception
                 return new string[0];
             }
@@ -161,6 +181,7 @@ namespace BackupToolWF
 
         public static string[,] LoadPresets()
         {
+            SetCursor();
             try
             {
                 File.SetAttributes(applicationPath + @"\savedPresets.txt", FileAttributes.Normal); //ensure not readonly
@@ -174,15 +195,18 @@ namespace BackupToolWF
                     parsed[a, 1] = temp[1];
                     parsed[a, 2] = temp[2];
                 }
+                SetCursor(false);
                 return parsed;
             }
             catch (FileNotFoundException)
             {
+                SetCursor(false);
                 File.Create(applicationPath + @"\savedPresets.txt");
                 return new string[0,0];
             }
             catch (Exception ex)
             {
+                SetCursor(false);
                 MessageBox.Show("\tError: " + ex.Message + "\n\tCould not load saved presets..."); //break on other exception
                 return new string[0,0];
             }
@@ -190,6 +214,7 @@ namespace BackupToolWF
 
         public static void MakePreset(string name, string input, string output, string[,] presets)
         {
+            SetCursor();
             string[] temp = new string[presets.GetLength(0) + 1];
             for (int a = 0; a < presets.GetLength(0); a++)
             {
@@ -204,15 +229,18 @@ namespace BackupToolWF
             }
             catch (Exception e)
             {
+                SetCursor(false);
                 MessageBox.Show("Error: " + e.Message);
                 return;
             }
 
+            SetCursor(false);
             return;
         }
 
         public static void UpdatePreset(int index, string name, string input, string output, string[,] presets)
         {
+            SetCursor();
             string[] temp = new string[presets.GetLength(0)];
             for(int a = 0; a < presets.GetLength(0); a++)
             {
@@ -233,15 +261,18 @@ namespace BackupToolWF
             }
             catch (Exception e)
             {
+                SetCursor(false);
                 MessageBox.Show("Error: " + e.Message);
                 return;
             }
 
+            SetCursor(false);
             return;
         }
 
         public static void DeletePreset(int index, string[,] presets)
         {
+            SetCursor();
             string[] temp = new string[presets.GetLength(0) - 1];
             for (int a = 0; a < presets.GetLength(0); a++)
             {
@@ -256,30 +287,31 @@ namespace BackupToolWF
             }
             catch (Exception e)
             {
+                SetCursor(false);
                 MessageBox.Show("Error: " + e.Message);
                 return;
             }
 
+            SetCursor(false);
             return;
         }
 
         public static bool DuplicateFiles(string input, string output)
         {
-            Form working = new movingFiles();
-            working.Show();
+            SetCursor();
             try
             {
                 CopyFilesRecursively(new DirectoryInfo(input), new DirectoryInfo(output));
             }
             catch (Exception ex)
             {
+                SetCursor(false);
                 MessageBox.Show("Error: " + ex.Message);
-                working.Close();
                 return false;
             }
 
+            SetCursor(false);
             MessageBox.Show("Files moved successfully from: " + input + "\nto: " + output);
-            working.Close();
             return true;
 
         }
