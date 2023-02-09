@@ -64,27 +64,38 @@ namespace BackupToolWF
         private void deletePresetEntry_TextChanged(object sender, EventArgs e)
         {
             if (deletePresetEntry.Text == null || deletePresetEntry.Text == "") return;
-            if (deletePresetEntry.Text == temp[0]) deleteButton.Enabled = true;
+            if (deletePresetEntry.Text == "Delete") deleteButton.Enabled = true;
             else deleteButton.Enabled = false;
         }
 
         private void presetNameEdit_TextChanged(object sender, EventArgs e)
         {
-            if (presetNameEdit.Text == null || presetNameEdit.Text == "" || presetNameEdit.Text == temp[0]) differentName = true;
+            if (presetNameEdit.Text == null || presetNameEdit.Text == "" || presetNameEdit.Text == temp[0]) differentName = false;
+            else differentName = true;
 
             applyChangesButton.Enabled = CheckApplyButtonEnabled();
         }
 
         private void presetInputEdit_TextChanged(object sender, EventArgs e)
         {
-            if (presetInputEdit.Text == null || presetInputEdit.Text == "" || presetInputEdit.Text == temp[0]) differentInput = true;
+            if (!Program.CheckValidDirectory(presetInputEdit.Text) || presetInputEdit.Text == null|| presetInputEdit.Text == temp[1])
+            {
+                presetInputEdit.Text = "";
+            }
+            if (presetInputEdit.Text == "") differentInput = false;
+            else differentInput = true;
 
             applyChangesButton.Enabled = CheckApplyButtonEnabled();
         }
 
         private void presetOutputEdit_TextChanged(object sender, EventArgs e)
         {
-            if (presetOutputEdit.Text == null || presetOutputEdit.Text == "" || presetOutputEdit.Text == temp[0]) differentOutput = true;
+            if (!Program.CheckValidDirectory(presetOutputEdit.Text) || presetOutputEdit.Text == null || presetOutputEdit.Text == temp[2])
+            {
+                presetOutputEdit.Text = "";
+            }
+            if (presetOutputEdit.Text == "") differentOutput = false;
+            else differentOutput = true;
 
             applyChangesButton.Enabled = CheckApplyButtonEnabled();
         }
@@ -109,7 +120,7 @@ namespace BackupToolWF
             presetOutputEdit.Text = temp[2];
             presetOutputEdit.PlaceholderText = temp[2];
             deletePresetEntry.Text = "";
-            deletePresetEntry.PlaceholderText = temp[0];
+            //deletePresetEntry.PlaceholderText = temp[0];
             applyChangesButton.Enabled = false;
         }
 
@@ -161,7 +172,8 @@ namespace BackupToolWF
             }
             else newOutput = temp[2];
 
-            Program.UpdatePreset(presetList.SelectedIndex, newName, newInput, newOutput, loadedPresets);
+            if (Program.UpdatePreset(presetList.SelectedIndex, newName, newInput, newOutput, loadedPresets))
+                MessageBox.Show("Preset updated successfully...");
             RestartForm();
         }
 
@@ -182,6 +194,49 @@ namespace BackupToolWF
         {
             Form makePreset = new makePresetScreen(this);
             Program.StartNewForm(this, makePreset);
+        }
+
+        private void browseInputButton_Click(object sender, EventArgs e)
+        {
+            //temp string for reference
+            string tempDir = "";
+
+            //create a new folder browser window
+            FolderBrowserDialog browser = new FolderBrowserDialog();
+            browser.Description = "Select input folder";
+            browser.UseDescriptionForTitle = true;
+
+            //if valid result from the dialogue
+            if (browser.ShowDialog() == DialogResult.OK)
+            {
+                //set the chosen directory to the temp value
+                tempDir = browser.SelectedPath;
+                if (Program.debug) MessageBox.Show("File dialogue returned " + tempDir);
+            }
+
+            presetInputEdit.Text = tempDir;
+        }
+
+        private void browseOutputButton_Click(object sender, EventArgs e)
+        {
+
+            //temp string for reference
+            string tempDir = "";
+
+            //create a new folder browser window
+            FolderBrowserDialog browser = new FolderBrowserDialog();
+            browser.Description = "Select output folder";
+            browser.UseDescriptionForTitle = true;
+
+            //if valid result from the dialogue
+            if (browser.ShowDialog() == DialogResult.OK)
+            {
+                //set the chosen directory to the temp value
+                tempDir = browser.SelectedPath;
+                if (Program.debug) MessageBox.Show("File dialogue returned " + tempDir);
+            }
+
+            presetOutputEdit.Text = tempDir;
         }
 
         private bool CheckApplyButtonEnabled()

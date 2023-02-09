@@ -33,6 +33,8 @@
             this.presetList = new System.Windows.Forms.ListBox();
             this.presetScreenLabel = new System.Windows.Forms.Label();
             this.presetInfo = new System.Windows.Forms.GroupBox();
+            this.browseOutputButton = new System.Windows.Forms.Button();
+            this.browseInputButton = new System.Windows.Forms.Button();
             this.applyChangesButton = new System.Windows.Forms.Button();
             this.presetOutputEdit = new System.Windows.Forms.TextBox();
             this.presetInputEdit = new System.Windows.Forms.TextBox();
@@ -93,6 +95,8 @@
             // 
             // presetInfo
             // 
+            this.presetInfo.Controls.Add(this.browseOutputButton);
+            this.presetInfo.Controls.Add(this.browseInputButton);
             this.presetInfo.Controls.Add(this.applyChangesButton);
             this.presetInfo.Controls.Add(this.presetOutputEdit);
             this.presetInfo.Controls.Add(this.presetInputEdit);
@@ -109,6 +113,30 @@
             this.presetInfo.TabStop = false;
             this.presetInfo.Text = "Preset Information";
             // 
+            // browseOutputButton
+            // 
+            this.browseOutputButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.browseOutputButton.Location = new System.Drawing.Point(480, 93);
+            this.browseOutputButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.browseOutputButton.Name = "browseOutputButton";
+            this.browseOutputButton.Size = new System.Drawing.Size(154, 33);
+            this.browseOutputButton.TabIndex = 14;
+            this.browseOutputButton.Text = "Browse";
+            this.browseOutputButton.UseVisualStyleBackColor = true;
+            this.browseOutputButton.Click += new System.EventHandler(this.browseOutputButton_Click);
+            // 
+            // browseInputButton
+            // 
+            this.browseInputButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.browseInputButton.Location = new System.Drawing.Point(479, 58);
+            this.browseInputButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.browseInputButton.Name = "browseInputButton";
+            this.browseInputButton.Size = new System.Drawing.Size(154, 33);
+            this.browseInputButton.TabIndex = 13;
+            this.browseInputButton.Text = "Browse";
+            this.browseInputButton.UseVisualStyleBackColor = true;
+            this.browseInputButton.Click += new System.EventHandler(this.browseInputButton_Click);
+            // 
             // applyChangesButton
             // 
             this.applyChangesButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -123,21 +151,23 @@
             // 
             // presetOutputEdit
             // 
+            this.presetOutputEdit.Enabled = false;
             this.presetOutputEdit.Location = new System.Drawing.Point(128, 95);
             this.presetOutputEdit.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.presetOutputEdit.Name = "presetOutputEdit";
-            this.presetOutputEdit.PlaceholderText = "C:\\Users";
-            this.presetOutputEdit.Size = new System.Drawing.Size(505, 27);
+            this.presetOutputEdit.PlaceholderText = "C:\\";
+            this.presetOutputEdit.Size = new System.Drawing.Size(343, 27);
             this.presetOutputEdit.TabIndex = 5;
             this.presetOutputEdit.TextChanged += new System.EventHandler(this.presetOutputEdit_TextChanged);
             // 
             // presetInputEdit
             // 
+            this.presetInputEdit.Enabled = false;
             this.presetInputEdit.Location = new System.Drawing.Point(128, 56);
             this.presetInputEdit.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.presetInputEdit.Name = "presetInputEdit";
-            this.presetInputEdit.PlaceholderText = "C:\\Users";
-            this.presetInputEdit.Size = new System.Drawing.Size(505, 27);
+            this.presetInputEdit.PlaceholderText = "C:\\";
+            this.presetInputEdit.Size = new System.Drawing.Size(343, 27);
             this.presetInputEdit.TabIndex = 4;
             this.presetInputEdit.TextChanged += new System.EventHandler(this.presetInputEdit_TextChanged);
             // 
@@ -218,7 +248,7 @@
             this.deletePresetEntry.Location = new System.Drawing.Point(11, 60);
             this.deletePresetEntry.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.deletePresetEntry.Name = "deletePresetEntry";
-            this.deletePresetEntry.PlaceholderText = "Preset 1";
+            this.deletePresetEntry.PlaceholderText = "Delete";
             this.deletePresetEntry.Size = new System.Drawing.Size(460, 27);
             this.deletePresetEntry.TabIndex = 1;
             this.deletePresetEntry.TextChanged += new System.EventHandler(this.deletePresetEntry_TextChanged);
@@ -229,7 +259,7 @@
             this.deleteLabel.Name = "deleteLabel";
             this.deleteLabel.Size = new System.Drawing.Size(626, 31);
             this.deleteLabel.TabIndex = 0;
-            this.deleteLabel.Text = "Enter the name of the selected preset and press \'Delete\' to remove this preset";
+            this.deleteLabel.Text = "Enter \'Delete\' and press the button to remove the selected preset";
             // 
             // managePresetsScreen
             // 
@@ -274,5 +304,7 @@
         private Button deleteButton;
         private TextBox deletePresetEntry;
         private Label deleteLabel;
+        private Button browseOutputButton;
+        private Button browseInputButton;
     }
 }

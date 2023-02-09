@@ -238,7 +238,7 @@ namespace BackupToolWF
             return;
         }
 
-        public static void UpdatePreset(int index, string name, string input, string output, string[,] presets)
+        public static bool UpdatePreset(int index, string name, string input, string output, string[,] presets)
         {
             SetCursor();
             string[] temp = new string[presets.GetLength(0)];
@@ -263,11 +263,11 @@ namespace BackupToolWF
             {
                 SetCursor(false);
                 MessageBox.Show("Error: " + e.Message);
-                return;
+                return false;
             }
 
             SetCursor(false);
-            return;
+            return true;
         }
 
         public static void DeletePreset(int index, string[,] presets)
