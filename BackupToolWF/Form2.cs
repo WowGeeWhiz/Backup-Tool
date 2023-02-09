@@ -235,6 +235,9 @@ namespace BackupToolWF
 
             loadNewPathEntry.Text = newSaveInputLabel.Text = tempDir;
 
+            if (Directory.Exists(tempDir)) hasNewInput = true;
+            else hasNewInput = false;
+
             if (tempDir != null && tempDir != "") saveNewLoadPathOption.Enabled = true;
             else saveNewLoadPathOption.Enabled = false;
 
@@ -261,7 +264,12 @@ namespace BackupToolWF
 
             //Check for progrem access to directory
             //if program has access, set the new directory to the value of the textbox
-            if (Program.AccessibleDirectory(tempDir)) duplicateToNewPathEntry.Text = newSaveOutputLabel.Text = tempDir;
+            if (Program.AccessibleDirectory(tempDir))
+            {
+                duplicateToNewPathEntry.Text = newSaveOutputLabel.Text = tempDir;
+                hasNewOutput = true;
+            }
+            else hasNewOutput = false;
             //message appears during call to Preferences.AccessibleDirectory if the directory is inaccessible
 
             if (tempDir != null && tempDir != "") saveNewSavePathOption.Enabled = true;
