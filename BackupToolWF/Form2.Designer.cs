@@ -125,8 +125,7 @@
             this.loadNewPathEntry.Location = new System.Drawing.Point(309, 25);
             this.loadNewPathEntry.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.loadNewPathEntry.Name = "loadNewPathEntry";
-            this.loadNewPathEntry.PlaceholderText = "C:\\Documents";
-            this.loadNewPathEntry.ReadOnly = true;
+            this.loadNewPathEntry.PlaceholderText = "New Input Directory";
             this.loadNewPathEntry.Size = new System.Drawing.Size(230, 27);
             this.loadNewPathEntry.TabIndex = 2;
             this.loadNewPathEntry.TextChanged += new System.EventHandler(this.loadNewPathEntry_TextChanged);
@@ -213,8 +212,7 @@
             this.duplicateToNewPathEntry.Location = new System.Drawing.Point(309, 21);
             this.duplicateToNewPathEntry.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.duplicateToNewPathEntry.Name = "duplicateToNewPathEntry";
-            this.duplicateToNewPathEntry.PlaceholderText = "C:\\Documents";
-            this.duplicateToNewPathEntry.ReadOnly = true;
+            this.duplicateToNewPathEntry.PlaceholderText = "New Output Directory";
             this.duplicateToNewPathEntry.Size = new System.Drawing.Size(230, 27);
             this.duplicateToNewPathEntry.TabIndex = 6;
             this.duplicateToNewPathEntry.TextChanged += new System.EventHandler(this.duplicateToNewPathEntry_TextChanged);
@@ -373,7 +371,6 @@
         private GroupBox duplicateToGroup;
         private RadioButton loadNewPathOption;
         private RadioButton loadSavedPathOption;
-        private TextBox loadNewPathEntry;
         private ListBox loadSavedPathList;
         private ListBox duplicateToSavedPathList;
         private TextBox duplicateToNewPathEntry;
@@ -390,5 +387,6 @@
         private Button browseInput;
         private Button browseOutput;
         private FolderBrowserDialog folderBrowserDialog1;
+        private TextBox loadNewPathEntry;
     }
 }

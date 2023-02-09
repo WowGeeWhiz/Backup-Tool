@@ -230,7 +230,15 @@ namespace BackupToolWF
             {
                 //set the chosen directory to the temp value
                 tempDir = browser.SelectedPath;
+                if (Program.debug) MessageBox.Show("File dialogue returned " + tempDir);
             }
+
+            loadNewPathEntry.Text = newSaveInputLabel.Text = tempDir;
+
+            if (tempDir != null && tempDir != "") saveNewLoadPathOption.Enabled = true;
+            else saveNewLoadPathOption.Enabled = false;
+
+            duplicateButton.Enabled = CheckForValidDupe();
         }
 
         private void browseOutput_Click(object sender, EventArgs e)
@@ -248,12 +256,18 @@ namespace BackupToolWF
             {
                 //set the chosen directory to the temp value
                 tempDir = browser.SelectedPath;
+                if (Program.debug) MessageBox.Show("File dialogue returned " + tempDir);
             }
 
             //Check for progrem access to directory
             //if program has access, set the new directory to the value of the textbox
-            if (Program.AccessibleDirectory(tempDir)) duplicateToNewPathEntry.Text = tempDir;
+            if (Program.AccessibleDirectory(tempDir)) duplicateToNewPathEntry.Text = newSaveOutputLabel.Text = tempDir;
             //message appears during call to Preferences.AccessibleDirectory if the directory is inaccessible
+
+            if (tempDir != null && tempDir != "") saveNewSavePathOption.Enabled = true;
+            else saveNewSavePathOption.Enabled = false;
+
+            duplicateButton.Enabled = CheckForValidDupe();
         }
 
         private void duplicateToNewPathOption_CheckedChanged(object sender, EventArgs e)
@@ -344,7 +358,6 @@ namespace BackupToolWF
                 browseInput.Enabled = true; //enable related option and uncheck the other option
                 loadSavedPathOption.Checked = false;
                 inputFromSave = false;
-                saveNewLoadPathOption.Enabled = true;
             }
             else
             {
