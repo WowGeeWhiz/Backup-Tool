@@ -91,6 +91,8 @@ namespace BackupToolWF
 
         private void presetList_SelectedIndexChanged(object sender, EventArgs e)
         {
+            deleteButton.Enabled = false;
+
             if (presetList.SelectedIndex > loadedPresets.GetLength(0) - 1) RestartForm();
             differentName = differentInput = differentOutput = false;
             int index = presetList.SelectedIndex;
@@ -218,6 +220,7 @@ namespace BackupToolWF
             presetOutputEdit.PlaceholderText = "";
             deletePresetEntry.Text = "";
             deletePresetEntry.PlaceholderText = "";
+            deleteButton.Enabled = false;
         }
     }
 }
