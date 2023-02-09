@@ -110,7 +110,7 @@ namespace BackupToolWF
         {
             foreach (char c in dir)
             {
-                if (c == '\'' || c == '|' || c == '?' || c == '*' || c == '<' || c == '>' || c == '"') return false;
+                if (c == '/' || c == '\'' || c == '|' || c == '?' || c == '*' || c == '<' || c == '>' || c == '"') return false;
             }
             return true;
         }
