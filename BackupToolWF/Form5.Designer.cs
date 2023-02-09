@@ -39,18 +39,19 @@
             // 
             this.versionLabel.AutoSize = true;
             this.versionLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.versionLabel.Location = new System.Drawing.Point(0, 546);
+            this.versionLabel.Location = new System.Drawing.Point(0, 728);
             this.versionLabel.Name = "versionLabel";
-            this.versionLabel.Size = new System.Drawing.Size(94, 15);
+            this.versionLabel.Size = new System.Drawing.Size(119, 20);
             this.versionLabel.TabIndex = 6;
             this.versionLabel.Text = "Version text here";
             // 
             // backButton
             // 
             this.backButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.backButton.Location = new System.Drawing.Point(225, 434);
+            this.backButton.Location = new System.Drawing.Point(257, 579);
+            this.backButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.backButton.Name = "backButton";
-            this.backButton.Size = new System.Drawing.Size(150, 25);
+            this.backButton.Size = new System.Drawing.Size(171, 33);
             this.backButton.TabIndex = 5;
             this.backButton.Text = "Back";
             this.backButton.UseVisualStyleBackColor = true;
@@ -59,9 +60,10 @@
             // managePresets
             // 
             this.managePresets.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.managePresets.Location = new System.Drawing.Point(225, 103);
+            this.managePresets.Location = new System.Drawing.Point(257, 137);
+            this.managePresets.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.managePresets.Name = "managePresets";
-            this.managePresets.Size = new System.Drawing.Size(150, 25);
+            this.managePresets.Size = new System.Drawing.Size(171, 33);
             this.managePresets.TabIndex = 12;
             this.managePresets.Text = "Manage Presets";
             this.managePresets.UseVisualStyleBackColor = true;
@@ -71,9 +73,9 @@
             // 
             this.manageScreenLabel.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.manageScreenLabel.AutoSize = true;
-            this.manageScreenLabel.Location = new System.Drawing.Point(225, 75);
+            this.manageScreenLabel.Location = new System.Drawing.Point(257, 100);
             this.manageScreenLabel.Name = "manageScreenLabel";
-            this.manageScreenLabel.Size = new System.Drawing.Size(150, 15);
+            this.manageScreenLabel.Size = new System.Drawing.Size(189, 20);
             this.manageScreenLabel.TabIndex = 13;
             this.manageScreenLabel.Text = "Manage Saved Information";
             this.manageScreenLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -81,9 +83,10 @@
             // managePaths
             // 
             this.managePaths.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.managePaths.Location = new System.Drawing.Point(225, 134);
+            this.managePaths.Location = new System.Drawing.Point(257, 179);
+            this.managePaths.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.managePaths.Name = "managePaths";
-            this.managePaths.Size = new System.Drawing.Size(150, 25);
+            this.managePaths.Size = new System.Drawing.Size(171, 33);
             this.managePaths.TabIndex = 14;
             this.managePaths.Text = "Manage Paths";
             this.managePaths.UseVisualStyleBackColor = true;
@@ -91,14 +94,15 @@
             // 
             // manageSavesForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(584, 561);
+            this.ClientSize = new System.Drawing.Size(667, 748);
             this.Controls.Add(this.managePaths);
             this.Controls.Add(this.manageScreenLabel);
             this.Controls.Add(this.managePresets);
             this.Controls.Add(this.versionLabel);
             this.Controls.Add(this.backButton);
+            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "manageSavesForm";
             this.Text = "Form5";
             this.ResumeLayout(false);
